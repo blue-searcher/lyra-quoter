@@ -3,6 +3,7 @@ require("dotenv").config();
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-gas-reporter");
 require('hardhat-abi-exporter');
+require("@nomiclabs/hardhat-etherscan");
 
 module.exports = {
   solidity: "0.8.9",
@@ -11,6 +12,11 @@ module.exports = {
       enabled: true,
       runs: 200,
     },
+    libraries: {
+      "libraries/BlackScholes.sol": {
+        "BlackScholes": "0xE97831964bF41C564EDF6629f818Ed36C85fD520"
+      }
+    }
   },
   networks: {
     hardhat: {
@@ -35,4 +41,9 @@ module.exports = {
     clear: true,
     spacing: 2,
   },
+  etherscan: {
+    apiKey: {
+      optimisticEthereum: process.env.ETHERSCAN_API_KEY,
+    }
+  }
 };

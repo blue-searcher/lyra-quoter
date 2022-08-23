@@ -6,6 +6,12 @@ const lyraAbi = require("./abi/lyra");
 
 const UNIT = ethers.BigNumber.from("1000000000000000000");
 
+const SUSD_ADDRESS = "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9";
+const OPTION_MARKET_WRAPPER = "0xCCE7819d65f348c64B7Beb205BA367b3fE33763B";
+const ETH_OPTION_MARKET = "0x1d42a98848e022908069c2c545aE44Cc78509Bc8";
+
+const SUSD_HOLDER_ADDRESS = "0xCB33844b365c53D3462271cEe9B719B6Fc8bA06A"; //random EOA found on https://optimistic.etherscan.io/token/0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9#balances
+
 const deploy = async () => {
   const LyraQuoter = await ethers.getContractFactory(
     "LyraQuoter", 
@@ -16,18 +22,14 @@ const deploy = async () => {
     }
   );
   quoter = await LyraQuoter.deploy(
-    "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
-    "0xbfa31380ED380cEb325153eA08f296A45A489108",
-    "0x5Db73886c4730dBF3C562ebf8044E19E8C93843e",
-    "0x73b161f1bcF37048A5173619cda53aaa56A28Be0",
-    "0xbb3e8Eac35e649ed1071A9Ec42223d474e67b19A"
+    "0xF5A0442D4753cA1Ea36427ec071aa5E786dA5916", //register
   );
   await quoter.deployed();
   return quoter;
 };
 
 const getSUSDBalance = async (addr) => {
-  const SUSDContract = await ethers.getContractAt(erc20Abi, "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9");
+  const SUSDContract = await ethers.getContractAt(erc20Abi, SUSD_ADDRESS);
   return SUSDContract.balanceOf(addr);
 };
 
@@ -39,13 +41,25 @@ const impersonateAccount = async (addr) => {
   return await ethers.getSigner(addr);
 };
 
+const approve = async (signer, amount) => {
+  const SUSDContract = await ethers.getContractAt(erc20Abi, SUSD_ADDRESS);
+  await SUSDContract.connect(signer).approve(OPTION_MARKET_WRAPPER, amount);
+};
+
 describe("LyraQuoter", function () {
   let quoter;
-  let owner;
+  let optionMarketWrapper;
+
+  let account;
+  let sUSDBalance;
 
   beforeEach(async function () {
-    [owner] = await ethers.getSigners();
     quoter = await deploy();
+    optionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, OPTION_MARKET_WRAPPER);
+
+    account = await impersonateAccount(SUSD_HOLDER_ADDRESS);
+    sUSDBalance = await getSUSDBalance(account.address);
+    await approve(account, sUSDBalance);
   });
 
   describe("quote()", function () {
@@ -55,11 +69,6 @@ describe("LyraQuoter", function () {
       const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
       const iterations = "1";
       const optionType = "0"; //buy call
-
-      const account = await impersonateAccount(process.env.SUSD_HOLDER_ADDRESS);
-
-      const sUSDBalance = await getSUSDBalance(account.address);
-      const OptionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, "0xCCE7819d65f348c64B7Beb205BA367b3fE33763B");
 
       const openPositionParams = {
         optionMarket: "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
@@ -76,11 +85,11 @@ describe("LyraQuoter", function () {
         inputAsset: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
       };
 
-      const simulatedResult = await OptionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
+      const simulatedResult = await optionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -94,11 +103,6 @@ describe("LyraQuoter", function () {
       const iterations = "2";
       const optionType = "0"; //buy call
 
-      const account = await impersonateAccount(process.env.SUSD_HOLDER_ADDRESS);
-
-      const sUSDBalance = await getSUSDBalance(account.address);
-      const OptionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, "0xCCE7819d65f348c64B7Beb205BA367b3fE33763B");
-
       const openPositionParams = {
         optionMarket: "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
         strikeId: strikeId,
@@ -114,11 +118,11 @@ describe("LyraQuoter", function () {
         inputAsset: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
       };
 
-      const simulatedResult = await OptionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
+      const simulatedResult = await optionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -132,11 +136,6 @@ describe("LyraQuoter", function () {
       const iterations = "1";
       const optionType = "1"; //buy put
 
-      const account = await impersonateAccount(process.env.SUSD_HOLDER_ADDRESS);
-
-      const sUSDBalance = await getSUSDBalance(account.address);
-      const OptionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, "0xCCE7819d65f348c64B7Beb205BA367b3fE33763B");
-
       const openPositionParams = {
         optionMarket: "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
         strikeId: strikeId,
@@ -152,11 +151,11 @@ describe("LyraQuoter", function () {
         inputAsset: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
       };
 
-      const simulatedResult = await OptionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
+      const simulatedResult = await optionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -170,11 +169,6 @@ describe("LyraQuoter", function () {
       const iterations = "1";
       const optionType = "3"; //short call quote
 
-      const account = await impersonateAccount(process.env.SUSD_HOLDER_ADDRESS);
-
-      const sUSDBalance = await getSUSDBalance(account.address);
-      const OptionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, "0xCCE7819d65f348c64B7Beb205BA367b3fE33763B");
-
       const openPositionParams = {
         optionMarket: "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
         strikeId: strikeId,
@@ -190,11 +184,11 @@ describe("LyraQuoter", function () {
         inputAsset: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
       };
 
-      const simulatedResult = await OptionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
+      const simulatedResult = await optionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -208,11 +202,6 @@ describe("LyraQuoter", function () {
       const iterations = "1";
       const optionType = "4"; //short put quote
 
-      const account = await impersonateAccount(process.env.SUSD_HOLDER_ADDRESS);
-
-      const sUSDBalance = await getSUSDBalance(account.address);
-      const OptionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, "0xCCE7819d65f348c64B7Beb205BA367b3fE33763B");
-
       const openPositionParams = {
         optionMarket: "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
         strikeId: strikeId,
@@ -228,11 +217,11 @@ describe("LyraQuoter", function () {
         inputAsset: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
       };
 
-      const simulatedResult = await OptionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
+      const simulatedResult = await optionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -240,7 +229,7 @@ describe("LyraQuoter", function () {
       expect(quoteFee).to.equals(simulatedTotalFee);
     });
   });
-
+  
   describe("fullQuotes()", function () {
      
     it("fullQuotes()", async function () {
@@ -248,11 +237,6 @@ describe("LyraQuoter", function () {
       const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
       const iterations = "1";
       const optionType = "0"; //buy call
-
-      const account = await impersonateAccount(process.env.SUSD_HOLDER_ADDRESS);
-
-      const sUSDBalance = await getSUSDBalance(account.address);
-      const OptionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, "0xCCE7819d65f348c64B7Beb205BA367b3fE33763B");
 
       const openPositionParams = {
         optionMarket: "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
@@ -269,11 +253,11 @@ describe("LyraQuoter", function () {
         inputAsset: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
       };
 
-      const simulatedResult = await OptionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
+      const simulatedResult = await optionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const fullQuoteResult = await quoter.fullQuotes(strikeId, iterations, optionAmount);
+      const fullQuoteResult = await quoter.fullQuotes(ETH_OPTION_MARKET, strikeId, iterations, optionAmount);
       const quotePremium = fullQuoteResult[0][0].div(UNIT);
       const quoteFee = fullQuoteResult[1][0].div(UNIT);
 

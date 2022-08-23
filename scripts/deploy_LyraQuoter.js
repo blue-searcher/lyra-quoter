@@ -10,11 +10,7 @@ async function main() {
     },
   });
   const contract = await Factory.connect(deployer).deploy(
-    "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
-    "0xbfa31380ED380cEb325153eA08f296A45A489108",
-    "0x5Db73886c4730dBF3C562ebf8044E19E8C93843e",
-    "0x73b161f1bcF37048A5173619cda53aaa56A28Be0",
-    "0xbb3e8Eac35e649ed1071A9Ec42223d474e67b19A"
+    "0xF5A0442D4753cA1Ea36427ec071aa5E786dA5916", //register
   );
 
   console.log("Address:", contract.address);

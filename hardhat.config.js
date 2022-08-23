@@ -16,11 +16,12 @@ module.exports = {
     hardhat: {
       forking: {
         url: `https://mainnet.optimism.io`,
-        blockNumber: parseInt(process.env.BLOCK_NUMBER)
+        blockNumber: 19260075
       }
     },
     optimism: {
       url: "https://mainnet.optimism.io",
+      accounts: process.env.PRIVATE_KEY ? [`0x${process.env.PRIVATE_KEY}`] : [],
     },
   },
   mocha: {

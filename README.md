@@ -1,12 +1,9 @@
 # Lyra-quoter
 
-Inspired by [Lyra SDK](https://github.com/lyra-finance/lyra-js/tree/master/src/quote)
+Inspired by [Lyra SDK](https://github.com/lyra-finance/lyra-js)
 
 ##### Notes:
 - Might not have proper checks (already expired option for example)
-- Not sure if math operations are safe?
-- env variables are necessary to run tests only
-
-##### TODO:
-- Handle multiple markets on same deployment
-- Add a method to returns all live boards across markets
+- This is not intended to be used on-chain
+- totalPremium already takes into account fees
+- totalFee is `optionPriceFee + spotPriceFee + vegaFee + varianceFee`

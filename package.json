@@ -1,7 +1,7 @@
 {
   "name": "lyra-quoter",
   "version": "1.0.0",
-  "description": "Inspired by [Lyra SDK](https://github.com/lyra-finance/lyra-js/tree/master/src/quote)",
+  "description": " Quoter contract for Lyra options",
   "main": "hardhat.config.js",
   "directories": {
     "test": "test"
@@ -19,7 +19,7 @@
   "bugs": {
     "url": "https://github.com/blue-searcher/lyra-quoter/issues"
   },
-  "homepage": "https://github.com/blue-searcher/lyra-quoter#readme",
+  "homepage": "https://github.com/blue-searcher/lyra-quoter",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.2",

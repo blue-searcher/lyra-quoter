@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
 interface IOptionMarket {
@@ -251,4 +252,23 @@ interface IOptionGreekCache {
     function getGreekCacheParams() external view returns (GreekCacheParameters memory);
     function getGlobalCache() external view returns (GlobalCache memory);
     function getBoardGreeksView(uint boardId) external view returns (BoardGreeksView memory);
+}
+
+interface ILyraRegister {
+    struct OptionMarketAddresses {
+        ILiquidityPool liquidityPool;
+        address liquidityToken;
+        IOptionGreekCache greekCache;
+        IOptionMarket optionMarket;
+        IOptionMarketPricer optionMarketPricer;
+        address optionToken;
+        address poolHedger;
+        address shortCollateral;
+        address gwavOracle;
+        address quoteAsset;
+        address baseAsset;
+    }
+
+    function getMarketAddresses(IOptionMarket optionMarket) external view returns (OptionMarketAddresses memory);
+    function getGlobalAddress(bytes32 contractName) external view returns (address globalContract);
 }

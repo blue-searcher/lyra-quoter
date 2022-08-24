@@ -74,6 +74,19 @@ interface IOptionMarket {
       uint priceAtExpiry,
       uint strikeToBaseReturned
     );
+    function boardToPriceAtExpiry(uint256) external view returns (uint256);
+
+    error ExpectedNonZeroValue(address thrower, NonZeroValues valueType);
+    error InvalidBoardId(address thrower, uint boardId);
+    error InvalidExpiryTimestamp(address thrower, uint currentTime, uint expiry, uint maxBoardExpiry);
+    error BoardNotFrozen(address thrower, uint boardId);
+    error BoardAlreadySettled(address thrower, uint boardId);
+    error BoardNotExpired(address thrower, uint boardId);
+    error InvalidStrikeId(address thrower, uint strikeId);
+    error StrikeSkewLengthMismatch(address thrower, uint strikesLength, uint skewsLength);
+    error TotalCostOutsideOfSpecifiedBounds(address thrower, uint totalCost, uint minCost, uint maxCost);
+    error BoardIsFrozen(address thrower, uint boardId);
+    error BoardExpired(address thrower, uint boardId, uint boardExpiry, uint currentTime);
 }
 
 interface ISynthetixAdapter {

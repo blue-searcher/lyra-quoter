@@ -63,10 +63,31 @@ contract LyraQuoter {
         IOptionMarket.TradeDirection tradeDirection,
         bool isForceClose
     ) internal view returns (QuoteParameters memory quoteParameters) {
+        if (strikeId == 0) {
+            revert IOptionMarket.ExpectedNonZeroValue(address(this), IOptionMarket.NonZeroValues.STRIKE_ID);
+        }
+        if (iterations == 0) {
+            revert IOptionMarket.ExpectedNonZeroValue(address(this), IOptionMarket.NonZeroValues.ITERATIONS);
+        }
+
         ILyraRegister.OptionMarketAddresses memory marketAddresses = register.getMarketAddresses(optionMarket);
 
         IOptionMarket.Strike memory strike = optionMarket.getStrike(strikeId); 
+        if (strike.id != strikeId) {
+            revert IOptionMarket.InvalidStrikeId(address(this), strikeId);
+        }
+
         IOptionMarket.OptionBoard memory board = optionMarket.getOptionBoard(strike.boardId); 
+        uint256 boardToPriceAtExpiry = optionMarket.boardToPriceAtExpiry(board.id);
+        if (boardToPriceAtExpiry != 0) {
+            revert IOptionMarket.BoardAlreadySettled(address(this), board.id);
+        }
+        if (board.frozen) {
+          revert IOptionMarket.BoardIsFrozen(address(this), board.id);
+        }
+        if (block.timestamp >= board.expiry) {
+          revert IOptionMarket.BoardExpired(address(this), board.id, board.expiry, block.timestamp);
+        }
 
         ISynthetixAdapter.ExchangeParams memory exchangeParams = synthetixAdapter.getExchangeParams(address(optionMarket));
 

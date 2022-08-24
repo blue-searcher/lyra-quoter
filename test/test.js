@@ -267,4 +267,30 @@ describe("LyraQuoter", function () {
 
   });
 
+  describe("test reverts", function () {
+     
+    it("ExpectedNonZeroValue strikeId", async function () {
+      const strikeId = "0";
+      const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
+      const iterations = "1";
+      const optionType = "0"; //buy call
+
+      await expect(
+        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount)
+      ).revertedWith("ExpectedNonZeroValue");
+    });
+
+    it("BoardAlreadySettled", async function () {
+      const strikeId = "10";
+      const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
+      const iterations = "1";
+      const optionType = "0"; //buy call
+
+      await expect(
+        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount)
+      ).revertedWith("BoardAlreadySettled");
+    });
+
+  });
+
 });

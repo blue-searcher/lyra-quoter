@@ -89,7 +89,7 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -122,7 +122,7 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -155,7 +155,7 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -188,7 +188,7 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -221,7 +221,7 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -276,7 +276,7 @@ describe("LyraQuoter", function () {
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount)
+        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
       ).revertedWith("ExpectedNonZeroValue");
     });
 
@@ -287,7 +287,7 @@ describe("LyraQuoter", function () {
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount)
+        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
       ).revertedWith("BoardAlreadySettled");
     });
 

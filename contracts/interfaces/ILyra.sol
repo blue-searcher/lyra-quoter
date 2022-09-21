@@ -133,6 +133,21 @@ interface IOptionMarketPricer {
         uint varianceFee;
     }
 
+    struct TradeLimitParameters {
+        int minDelta;
+        int minForceCloseDelta;
+        uint tradingCutoff;
+        uint minBaseIV;
+        uint maxBaseIV;
+        uint minSkew;
+        uint maxSkew;
+        uint minVol;
+        uint maxVol;
+        uint absMinSkew;
+        uint absMaxSkew;
+        bool capSkewsToAbs;
+    }
+
     struct TradeResult {
         uint amount;
         uint premium;
@@ -186,6 +201,19 @@ interface IOptionMarketPricer {
         IOptionGreekCache.TradePricing memory pricing,
         uint skew
     ) external view returns (VarianceFeeComponents memory varianceFeeComponents);
+    function tradeLimitParams() external view returns (TradeLimitParameters memory);
+
+    error ForceCloseSkewOutOfRange(address thrower, bool isBuy, uint newSkew, uint minSkew, uint maxSkew);
+    error TradingCutoffReached(address thrower, uint tradingCutoff, uint boardExpiry, uint currentTime);
+    error VolSkewOrBaseIvOutsideOfTradingBounds(
+        address thrower,
+        bool isBuy,
+        VolComponents currentVol,
+        VolComponents newVol,
+        VolComponents tradeBounds
+    );
+    error TradeDeltaOutOfRange(address thrower, int strikeCallDelta, int minDelta, int maxDelta);
+    error ForceCloseDeltaOutOfRange(address thrower, int strikeCallDelta, int minDelta, int maxDelta);
 }
 
 interface IOptionGreekCache {
@@ -265,6 +293,13 @@ interface IOptionGreekCache {
     function getGreekCacheParams() external view returns (GreekCacheParameters memory);
     function getGlobalCache() external view returns (GlobalCache memory);
     function getBoardGreeksView(uint boardId) external view returns (BoardGreeksView memory);
+    function getPriceForForceClose(
+        IOptionMarket.TradeParameters memory trade,
+        IOptionMarket.Strike memory strike,
+        uint expiry,
+        uint newVol,
+        bool isPostCutoff
+    ) external view returns (uint optionPrice, uint forceCloseVol);
 }
 
 interface ILyraRegister {

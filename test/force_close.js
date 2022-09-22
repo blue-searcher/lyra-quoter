@@ -65,13 +65,13 @@ describe("LyraQuoter", function () {
   let account;
   let sUSDBalance;
 
-  const forkAndDeploy = async (blockNumber) => {
+  const forkAndDeploy = async (blockNumber, eoaAddress = SUSD_HOLDER_ADDRESS) => {
     await resetChain(blockNumber);
 
     quoter = await deploy();
     optionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, OPTION_MARKET_WRAPPER);
 
-    account = await impersonateAccount(SUSD_HOLDER_ADDRESS);
+    account = await impersonateAccount(eoaAddress);
     sUSDBalance = await getSUSDBalance(account.address);
     await approve(account, sUSDBalance);
   };
@@ -79,6 +79,40 @@ describe("LyraQuoter", function () {
   //https://optimistic.etherscan.io/tx/0x0f1b061a9b98574dd44e546362dc8606dbc16d1b6caac486115f0a48b2e2f40a
   describe("Force close", function () {
       
+    it("check", async function () {
+      await forkAndDeploy(23772100, "0x6710073666E7b9E8c1bA1d9D4CDeD9d1513D1D1F");
+
+      const strikeId = "129";  
+      const optionAmount = "2300000000000000000"
+      const iterations = "1";
+      const optionType = "2"; 
+
+      const forceClosePositionParams = {
+        optionMarket: "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
+        strikeId: strikeId,
+        positionId: 4337,
+        iterations: iterations,
+        setCollateralTo: 0,
+        currentCollateral: "2300000000000000000",
+        optionType: optionType,
+        amount: optionAmount,
+        minCost: 0,
+        maxCost: sUSDBalance,
+        inputAmount: "8437110245864999101",
+        inputAsset: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
+      };
+
+      const simulatedResult = await optionMarketWrapper.connect(account).callStatic.forceClosePosition(forceClosePositionParams);
+      const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
+      const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
+
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, true);
+      const quotePremium = quoteResult.totalPremium.div(UNIT);
+      const quoteFee = quoteResult.totalFee.div(UNIT);
+
+      expect(quotePremium).to.equals(simulatedTotalCost);
+      expect(quoteFee).to.equals(simulatedTotalFee);
+    });
 
   });
 

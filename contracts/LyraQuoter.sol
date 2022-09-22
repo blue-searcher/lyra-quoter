@@ -7,8 +7,6 @@ import "./libraries/BlackScholes.sol";
 
 import "./interfaces/ILyra.sol";
 
-import "hardhat/console.sol";
-
 contract LyraQuoter {
     using DecimalMath for uint256;
 
@@ -224,21 +222,6 @@ contract LyraQuoter {
         fees = optionPriceFee + spotPriceFee + vegaFee + varianceFee;
     }
 
-    function _getForceClosePrice(
-        QuoteParameters memory params, 
-        uint256 volTraded
-    ) internal view returns (uint256 price, uint256 vol) {
-        bool isPostCutoff = block.timestamp + params.tradeLimitParams.tradingCutoff > params.board.expiry;
-
-        (price, vol) = params.greekCache.getPriceForForceClose(
-            params.trade, 
-            params.strike, 
-            params.board.expiry, 
-            volTraded,
-            isPostCutoff
-        );
-    }
-
     function _checkIteration(
         QuoteParameters memory params, 
         uint256 baseIv, 
@@ -302,7 +285,7 @@ contract LyraQuoter {
 
         BlackScholes.PricesDeltaStdVega memory pricesDeltaStdVega = BlackScholes.pricesDeltaStdVega(BlackScholes.BlackScholesInputs({
             timeToExpirySec: params.timeToExpiry,
-            volatilityDecimal: newBaseIv.multiplyDecimal(newSkew), //correct to use new values?
+            volatilityDecimal: newBaseIv.multiplyDecimal(newSkew), 
             spotDecimal: params.trade.exchangeParams.spotPrice,
             strikePriceDecimal: params.strike.strikePrice,
             rateDecimal: params.greekCacheParameters.rateAndCarry
@@ -336,6 +319,21 @@ contract LyraQuoter {
         }
     }
 
+    function _getForceClosePrice(
+        QuoteParameters memory params, 
+        uint256 volTraded
+    ) internal view returns (uint256 price, uint256 vol) {
+        bool isPostCutoff = block.timestamp + params.tradeLimitParams.tradingCutoff > params.board.expiry;
+
+        (price, vol) = params.greekCache.getPriceForForceClose(
+            params.trade, 
+            params.strike, 
+            params.board.expiry, 
+            volTraded,
+            isPostCutoff
+        );
+    }
+
     function _quoteIteration(
         uint256 baseIv, 
         uint256 skew, 
@@ -362,9 +360,9 @@ contract LyraQuoter {
             optionPrice = _getOptionPrice(params, volTraded);
         }
 
-        uint256 ivVariance = abs(int256(params.boardGreek.ivGWAV) - int256(iterationResult.newBaseIv));
+        uint256 ivVariance = abs(SafeCast.toInt256(params.boardGreek.ivGWAV) - SafeCast.toInt256(iterationResult.newBaseIv));
 
-        int256 netStdVegaDiff = params.globalCache.netGreeks.netStdVega * int256(params.trade.amount) * (params.trade.isBuy ? int256(1) : int256(-1)) / 10e18;
+        int256 netStdVegaDiff = params.globalCache.netGreeks.netStdVega * SafeCast.toInt256(params.trade.amount) * (params.trade.isBuy ? int256(1) : int256(-1)) / int(DecimalMath.UNIT);
         iterationResult.postTradeAmmNetStdVega = preTradeAmmNetStdVega + netStdVegaDiff;
 
         FeeParameters memory feeParams = FeeParameters({
@@ -397,7 +395,7 @@ contract LyraQuoter {
             iterations, 
             optionType, 
             amount, 
-            IOptionMarket.TradeDirection.OPEN, 
+            isForceClose ? IOptionMarket.TradeDirection.CLOSE : IOptionMarket.TradeDirection.OPEN, 
             isForceClose
         );
 

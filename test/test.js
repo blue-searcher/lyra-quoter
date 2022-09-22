@@ -12,6 +12,17 @@ const ETH_OPTION_MARKET = "0x1d42a98848e022908069c2c545aE44Cc78509Bc8";
 
 const SUSD_HOLDER_ADDRESS = "0xCB33844b365c53D3462271cEe9B719B6Fc8bA06A"; //random EOA found on https://optimistic.etherscan.io/token/0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9#balances
 
+const resetChain = async (blockNumber) => {
+  return await ethers.provider.send("hardhat_reset", [
+    {
+      forking: {
+        jsonRpcUrl: `https://mainnet.optimism.io`,
+        blockNumber: blockNumber,
+      },
+    },
+  ]);
+};
+
 const deploy = async () => {
   const LyraQuoter = await ethers.getContractFactory(
     "LyraQuoter", 
@@ -54,6 +65,8 @@ describe("LyraQuoter", function () {
   let sUSDBalance;
 
   beforeEach(async function () {
+    await resetChain(19260075);
+    
     quoter = await deploy();
     optionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, OPTION_MARKET_WRAPPER);
 
@@ -228,6 +241,7 @@ describe("LyraQuoter", function () {
       expect(quotePremium).to.equals(simulatedTotalCost);
       expect(quoteFee).to.equals(simulatedTotalFee);
     });
+    
   });
   
   describe("fullQuotes()", function () {
@@ -292,5 +306,5 @@ describe("LyraQuoter", function () {
     });
 
   });
-
+  
 });

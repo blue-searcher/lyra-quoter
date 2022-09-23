@@ -5,6 +5,9 @@ require("hardhat-gas-reporter");
 require('hardhat-abi-exporter');
 require("@nomiclabs/hardhat-etherscan");
 
+require('hardhat-dependency-compiler');
+const { lyraContractPaths } = require('@lyrafinance/protocol/dist/test/utils/package/index-paths');
+
 module.exports = {
   solidity: "0.8.9",
   settings: {
@@ -45,5 +48,8 @@ module.exports = {
     apiKey: {
       optimisticEthereum: process.env.ETHERSCAN_API_KEY,
     }
+  },
+  dependencyCompiler: {
+    paths: lyraContractPaths,
   }
 };

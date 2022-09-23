@@ -76,6 +76,7 @@ describe("LyraQuoter", function () {
     await approve(account, sUSDBalance);
   };
   
+  /*
   //https://optimistic.etherscan.io/tx/0x6319a43042a3b67b25a74b6e1fde4e0650907902b28427fa3c77f3baf80a5214#eventlog
   describe("TradingCutoffReached", function () {
       
@@ -110,8 +111,8 @@ describe("LyraQuoter", function () {
     });
 
   });
+  */
 
-  /*
   describe("TradeDeltaOutOfRange", function () {
       
     it("revert", async function () {
@@ -122,6 +123,7 @@ describe("LyraQuoter", function () {
       const iterations = "1";
       const optionType = "0"; //buy call
 
+      /*
       const openPositionParams = {
         optionMarket: "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
         strikeId: strikeId,
@@ -141,6 +143,7 @@ describe("LyraQuoter", function () {
 
       console.log(simulatedResult.totalCost);
       console.log(simulatedResult.totalFee);
+      */
 
       await expect(
         quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
@@ -148,6 +151,5 @@ describe("LyraQuoter", function () {
     });
 
   });
-  */
 
 });

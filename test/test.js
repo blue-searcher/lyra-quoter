@@ -12,6 +12,17 @@ const ETH_OPTION_MARKET = "0x1d42a98848e022908069c2c545aE44Cc78509Bc8";
 
 const SUSD_HOLDER_ADDRESS = "0xCB33844b365c53D3462271cEe9B719B6Fc8bA06A"; //random EOA found on https://optimistic.etherscan.io/token/0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9#balances
 
+const resetChain = async (blockNumber) => {
+  return await ethers.provider.send("hardhat_reset", [
+    {
+      forking: {
+        jsonRpcUrl: `https://mainnet.optimism.io`,
+        blockNumber: blockNumber,
+      },
+    },
+  ]);
+};
+
 const deploy = async () => {
   const LyraQuoter = await ethers.getContractFactory(
     "LyraQuoter", 
@@ -54,6 +65,8 @@ describe("LyraQuoter", function () {
   let sUSDBalance;
 
   beforeEach(async function () {
+    await resetChain(19260075);
+    
     quoter = await deploy();
     optionMarketWrapper = await ethers.getContractAt(lyraAbi.OPTION_MARKET_WRAPPER, OPTION_MARKET_WRAPPER);
 
@@ -89,7 +102,7 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -122,7 +135,7 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -155,7 +168,7 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -188,7 +201,7 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
@@ -221,13 +234,14 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
       expect(quotePremium).to.equals(simulatedTotalCost);
       expect(quoteFee).to.equals(simulatedTotalFee);
     });
+    
   });
   
   describe("fullQuotes()", function () {
@@ -276,7 +290,7 @@ describe("LyraQuoter", function () {
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount)
+        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
       ).revertedWith("ExpectedNonZeroValue");
     });
 
@@ -287,10 +301,10 @@ describe("LyraQuoter", function () {
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount)
+        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
       ).revertedWith("BoardAlreadySettled");
     });
 
   });
-
+  
 });

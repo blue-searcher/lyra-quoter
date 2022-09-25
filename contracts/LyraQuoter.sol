@@ -2,8 +2,8 @@
 pragma solidity 0.8.9;
 
 import "openzeppelin-contracts-4.4.1/utils/math/SafeCast.sol";
-import "./libraries/DecimalMath.sol";
-import "./libraries/BlackScholes.sol";
+import "@lyrafinance/protocol/contracts/libraries/BlackScholes.sol";
+import "@lyrafinance/protocol/contracts/synthetix/DecimalMath.sol";
 
 import "./interfaces/ILyra.sol";
 
@@ -87,7 +87,9 @@ contract LyraQuoter {
         }
 
         IOptionMarket.OptionBoard memory board = optionMarket.getOptionBoard(strike.boardId); 
+        
         uint256 boardToPriceAtExpiry = optionMarket.boardToPriceAtExpiry(board.id);
+        
         if (boardToPriceAtExpiry != 0) {
             revert IOptionMarket.BoardAlreadySettled(address(this), board.id);
         }

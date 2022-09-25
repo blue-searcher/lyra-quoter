@@ -1,12 +1,10 @@
 const { lyraConstants, lyraDefaultParams, lyraEvm, TestSystem } = require('@lyrafinance/protocol');
 const { fastForwardTo } = require('@lyrafinance/protocol/dist/test/utils/evm');
-const { toBN } = require('@lyrafinance/protocol/dist/scripts/util/web3utils');
+const { toBN, currentTime } = require('@lyrafinance/protocol/dist/scripts/util/web3utils');
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 const UNIT = ethers.BigNumber.from("1000000000000000000");
-
-const ETH_OPTION_MARKET = "0x1d42a98848e022908069c2c545aE44Cc78509Bc8";
 
 const resetChain = async (blockNumber) => {
   return await ethers.provider.send("hardhat_reset", [
@@ -19,7 +17,7 @@ const resetChain = async (blockNumber) => {
   ]);
 };
 
-const deploy = async () => {
+const deploy = async (registerAddr) => {
   const LyraQuoter = await ethers.getContractFactory(
     "LyraQuoter", 
     {
@@ -29,7 +27,7 @@ const deploy = async () => {
     }
   );
   quoter = await LyraQuoter.deploy(
-    "0xF5A0442D4753cA1Ea36427ec071aa5E786dA5916", //register
+    registerAddr, //register
   );
   await quoter.deployed();
   return quoter;
@@ -38,6 +36,7 @@ const deploy = async () => {
 describe('LyraQuoter', async () => {
   let lyraTestSystem;
   let boardId;
+  let strikeId;
   let deployer;
 
   let quoter;
@@ -56,6 +55,7 @@ describe('LyraQuoter', async () => {
     const initialPoolDeposit = toBN('1500000'); // 1.5m
 
     const addresses = await ethers.getSigners();
+    deployer = addresses[0];
 
     const pricingParams = {
       ...lyraDefaultParams.PRICING_PARAMS,
@@ -64,7 +64,7 @@ describe('LyraQuoter', async () => {
       vegaFeeCoefficient: toBN('60'),
     };
 
-    lyraTestSystem = await TestSystem.deploy(deployer, true, false, { pricingParams });
+    lyraTestSystem = await TestSystem.deploy(deployer, false, false, { pricingParams });
     await TestSystem.seed(deployer, lyraTestSystem, {
       initialBoard: boardParameter,
       initialBasePrice: spotPrice,
@@ -77,50 +77,49 @@ describe('LyraQuoter', async () => {
     await lyraTestSystem.optionGreekCache.updateBoardCachedGreeks(boardId);
     await lyraEvm.fastForward(600);
 
-    quoter = await deploy();
+    const strikes = await lyraTestSystem.optionMarket.getBoardStrikes(boardId);
+    strikeId = strikes[0];
+
+    quoter = await deploy(lyraTestSystem.lyraRegistry.address);
   };
 
   describe("TradeDeltaOutOfRange", function () {
     it("revert", async function () {
-      await forkAndDeploy(24523548);
+      await forkAndDeploy(25180684);
 
-      let pricingParams = {
-        ...lyraDefaultParams.DEFAULT_TRADE_LIMIT_PARAMS,
+      let tradeLimitParams = {
+        ...lyraDefaultParams.TRADE_LIMIT_PARAMS,
         minDelta: toBN('1'),
       };
-      await lyraTestSystem.optionMarketPricer.setTradeLimitParams(pricingParams);
+      await lyraTestSystem.optionMarketPricer.setTradeLimitParams(tradeLimitParams);
 
-      const strikeId = ""; //TODO
       const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
       const iterations = "1";
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, false)
       ).revertedWith("TradeDeltaOutOfRange");
-
     });
   });
   
-  /*
   describe("VolSkewOrBaseIvOutsideOfTradingBounds", function () {
     it("revert", async function () {
       await forkAndDeploy(24283066); 
 
-      let pricingParams = {
-        ...lyraDefaultParams.DEFAULT_TRADE_LIMIT_PARAMS,
+      let tradeLimitParams = {
+        ...lyraDefaultParams.TRADE_LIMIT_PARAMS,
         minSkew: toBN('2'),
         maxSkew: toBN('0.5'),
       };
-      await lyraTestSystem.optionMarketPricer.setTradeLimitParams(pricingParams);
+      await lyraTestSystem.optionMarketPricer.setTradeLimitParams(tradeLimitParams);
 
-      const strikeId = ""; //TODO
       const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
       const iterations = "1";
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, false)
       ).revertedWith("VolSkewOrBaseIvOutsideOfTradingBounds");
     });
   });
@@ -129,16 +128,15 @@ describe('LyraQuoter', async () => {
     it("revert", async function () {
       await forkAndDeploy(23393450);
 
-      const board = {}; //TODO
+      const board = await lyraTestSystem.optionMarket.getOptionBoard(boardId);
       await fastForwardTo(parseInt(board.expiry.toString()) - 1000); // just before board expiry
 
-      const strikeId = ""; //TODO
       const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
       const iterations = "1";
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, false)
       ).revertedWith("TradingCutoffReached");
     });
   });
@@ -147,22 +145,21 @@ describe('LyraQuoter', async () => {
     it("revert", async function () {
       await forkAndDeploy(23393450);
 
-      let pricingParams = {
-        ...lyraDefaultParams.DEFAULT_TRADE_LIMIT_PARAMS,
+      let tradeLimitParams = {
+        ...lyraDefaultParams.TRADE_LIMIT_PARAMS,
         absMinSkew: toBN('2'),
         minSkew: toBN('2'),
         absMaxSkew: toBN('0.5'),
         maxSkew: toBN('0.5'),
       };
-      await lyraTestSystem.optionMarketPricer.setTradeLimitParams(pricingParams);
+      await lyraTestSystem.optionMarketPricer.setTradeLimitParams(tradeLimitParams);
 
-      const strikeId = ""; //TODO
       const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
       const iterations = "1";
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, true)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, true)
       ).revertedWith("ForceCloseSkewOutOfRange");
     });
   });
@@ -171,22 +168,20 @@ describe('LyraQuoter', async () => {
     it("revert", async function () {
       await forkAndDeploy(23393450);
 
-      let pricingParams = {
-        ...lyraDefaultParams.DEFAULT_TRADE_LIMIT_PARAMS,
+      let tradeLimitParams = {
+        ...lyraDefaultParams.TRADE_LIMIT_PARAMS,
         minForceCloseDelta: toBN('0'),
       };
-      await lyraTestSystem.optionMarketPricer.setTradeLimitParams(pricingParams);
+      await lyraTestSystem.optionMarketPricer.setTradeLimitParams(tradeLimitParams);
 
-      const strikeId = ""; //TODO
       const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
       const iterations = "1";
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, true)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, true)
       ).revertedWith("ForceCloseDeltaOutOfRange");
     });
   });
-  */
 
 });

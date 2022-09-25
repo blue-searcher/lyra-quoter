@@ -1,31 +1,35 @@
 require("dotenv").config();
-
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-gas-reporter");
 require('hardhat-abi-exporter');
 require("@nomiclabs/hardhat-etherscan");
-
 require('hardhat-dependency-compiler');
+
 const { lyraContractPaths } = require('@lyrafinance/protocol/dist/test/utils/package/index-paths');
 
 module.exports = {
-  solidity: "0.8.9",
-  settings: {
-    optimizer: {
-      enabled: true,
-      runs: 200,
+  solidity: {
+    version: '0.8.9',
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
     },
+  },
+  settings: {
+    /*
     libraries: {
       "libraries/BlackScholes.sol": {
         "BlackScholes": "0xE97831964bF41C564EDF6629f818Ed36C85fD520"
       }
     }
+    */
   },
   networks: {
     hardhat: {
       forking: {
         url: `https://mainnet.optimism.io`,
-        blockNumber: 19260075
       }
     },
     optimism: {

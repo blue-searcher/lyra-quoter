@@ -76,7 +76,6 @@ describe("LyraQuoter", function () {
     await approve(account, sUSDBalance);
   };
   
-  /*
   //https://optimistic.etherscan.io/tx/0x6319a43042a3b67b25a74b6e1fde4e0650907902b28427fa3c77f3baf80a5214#eventlog
   describe("TradingCutoffReached", function () {
       
@@ -108,46 +107,6 @@ describe("LyraQuoter", function () {
       await expect(
         quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
       ).revertedWith("VolSkewOrBaseIvOutsideOfTradingBounds");
-    });
-
-  });
-  */
-
-  describe("TradeDeltaOutOfRange", function () {
-      
-    it("revert", async function () {
-      await forkAndDeploy(24523548);
-
-      const strikeId = "158";
-      const optionAmount = ethers.BigNumber.from("1").mul(UNIT);
-      const iterations = "1";
-      const optionType = "0"; //buy call
-
-      /*
-      const openPositionParams = {
-        optionMarket: "0x1d42a98848e022908069c2c545aE44Cc78509Bc8",
-        strikeId: strikeId,
-        positionId: 0,
-        iterations: iterations,
-        setCollateralTo: 0,
-        currentCollateral: 0,
-        optionType: optionType,
-        amount: optionAmount,
-        minCost: 0,
-        maxCost: sUSDBalance,
-        inputAmount: sUSDBalance,
-        inputAsset: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
-      };
-      
-      const simulatedResult = await optionMarketWrapper.connect(account).callStatic.openPosition(openPositionParams);
-
-      console.log(simulatedResult.totalCost);
-      console.log(simulatedResult.totalFee);
-      */
-
-      await expect(
-        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, false)
-      ).revertedWith("TradeDeltaOutOfRange");
     });
 
   });

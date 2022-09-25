@@ -6,6 +6,9 @@ const { ethers } = require("hardhat");
 
 const UNIT = ethers.BigNumber.from("1000000000000000000");
 
+const OPEN_TRADE_DIRECTION = "0";
+const CLOSE_TRADE_DIRECTION = "1";
+
 const resetChain = async (blockNumber) => {
   return await ethers.provider.send("hardhat_reset", [
     {
@@ -98,7 +101,7 @@ describe('LyraQuoter', async () => {
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, false)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, OPEN_TRADE_DIRECTION, false)
       ).revertedWith("TradeDeltaOutOfRange");
     });
   });
@@ -119,7 +122,7 @@ describe('LyraQuoter', async () => {
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, false)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, OPEN_TRADE_DIRECTION, false)
       ).revertedWith("VolSkewOrBaseIvOutsideOfTradingBounds");
     });
   });
@@ -136,7 +139,7 @@ describe('LyraQuoter', async () => {
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, false)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, OPEN_TRADE_DIRECTION, false)
       ).revertedWith("TradingCutoffReached");
     });
   });
@@ -159,7 +162,7 @@ describe('LyraQuoter', async () => {
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, true)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, CLOSE_TRADE_DIRECTION, true)
       ).revertedWith("ForceCloseSkewOutOfRange");
     });
   });
@@ -179,7 +182,7 @@ describe('LyraQuoter', async () => {
       const optionType = "0"; //buy call
 
       await expect(
-        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, true)
+        quoter.quote(lyraTestSystem.optionMarket.address, strikeId, iterations, optionType, optionAmount, CLOSE_TRADE_DIRECTION, true)
       ).revertedWith("ForceCloseDeltaOutOfRange");
     });
   });

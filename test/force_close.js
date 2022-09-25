@@ -106,12 +106,29 @@ describe("LyraQuoter", function () {
       const simulatedTotalCost = simulatedResult.totalCost.div(UNIT);
       const simulatedTotalFee = simulatedResult.totalFee.div(UNIT);
 
-      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, true);
+      const quoteResult = await quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, "1", true);
       const quotePremium = quoteResult.totalPremium.div(UNIT);
       const quoteFee = quoteResult.totalFee.div(UNIT);
 
       expect(quotePremium).to.equals(simulatedTotalCost);
       expect(quoteFee).to.equals(simulatedTotalFee);
+    });
+
+  });
+
+  describe("InvalidTradeDirection", function () {
+      
+    it("revert", async function () {
+      await forkAndDeploy(23772100, "0x6710073666E7b9E8c1bA1d9D4CDeD9d1513D1D1F");
+
+      const strikeId = "129";  
+      const optionAmount = "2300000000000000000"
+      const iterations = "1";
+      const optionType = "2"; 
+
+      await expect(
+        quoter.quote(ETH_OPTION_MARKET, strikeId, iterations, optionType, optionAmount, "0", true)
+      ).revertedWith("InvalidTradeDirection");
     });
 
   });

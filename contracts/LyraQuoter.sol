@@ -389,15 +389,20 @@ contract LyraQuoter {
         uint256 iterations,
         IOptionMarket.OptionType optionType,
         uint256 amount,
+        IOptionMarket.TradeDirection tradeDirection,
         bool isForceClose
     ) public view returns (uint256 totalPremium, uint256 totalFee) {
+        if (isForceClose && tradeDirection != IOptionMarket.TradeDirection.CLOSE) {
+            revert InvalidTradeDirection(address(this), tradeDirection, isForceClose);
+        }
+
         QuoteParameters memory params = _composeQuote(
             _optionMarket,
             strikeId, 
             iterations, 
             optionType, 
             amount, 
-            isForceClose ? IOptionMarket.TradeDirection.CLOSE : IOptionMarket.TradeDirection.OPEN, 
+            tradeDirection,
             isForceClose
         );
 
@@ -423,7 +428,7 @@ contract LyraQuoter {
         }
     }
 
-    function fullQuotes(
+    function allOpenPositionQuotes(
         IOptionMarket _optionMarket,
         uint256 strikeId,
         uint256 iterations,
@@ -432,11 +437,11 @@ contract LyraQuoter {
         uint256[] memory totalPremiums = new uint256[](5);
         uint256[] memory totalFees = new uint256[](5);
 
-        (totalPremiums[0], totalFees[0]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.LONG_CALL, amount, false);
-        (totalPremiums[1], totalFees[1]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.LONG_PUT, amount, false);
-        (totalPremiums[2], totalFees[2]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.SHORT_CALL_BASE, amount, false);
-        (totalPremiums[3], totalFees[3]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.SHORT_CALL_QUOTE, amount, false);
-        (totalPremiums[4], totalFees[4]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.SHORT_PUT_QUOTE, amount, false);
+        (totalPremiums[0], totalFees[0]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.LONG_CALL, amount, IOptionMarket.TradeDirection.OPEN, false);
+        (totalPremiums[1], totalFees[1]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.LONG_PUT, amount, IOptionMarket.TradeDirection.OPEN, false);
+        (totalPremiums[2], totalFees[2]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.SHORT_CALL_BASE, amount, IOptionMarket.TradeDirection.OPEN, false);
+        (totalPremiums[3], totalFees[3]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.SHORT_CALL_QUOTE, amount, IOptionMarket.TradeDirection.OPEN, false);
+        (totalPremiums[4], totalFees[4]) = quote(_optionMarket, strikeId, iterations, IOptionMarket.OptionType.SHORT_PUT_QUOTE, amount, IOptionMarket.TradeDirection.OPEN, false);
 
         return (totalPremiums, totalFees);
     }
@@ -448,4 +453,6 @@ contract LyraQuoter {
     function abs(int val) internal pure returns (uint) {
         return uint(val < 0 ? -val : val);
     }
+
+    error InvalidTradeDirection(address thrower, IOptionMarket.TradeDirection tradeDirection, bool isForceClose);
 }

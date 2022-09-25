@@ -17,15 +17,6 @@ module.exports = {
       },
     },
   },
-  settings: {
-    /*
-    libraries: {
-      "libraries/BlackScholes.sol": {
-        "BlackScholes": "0xE97831964bF41C564EDF6629f818Ed36C85fD520"
-      }
-    }
-    */
-  },
   networks: {
     hardhat: {
       forking: {
